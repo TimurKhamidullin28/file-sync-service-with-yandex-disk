@@ -6,7 +6,7 @@ from typing import Dict
 from dotenv import load_dotenv
 import requests
 
-from api.main import api_request
+from api import api_request
 
 load_dotenv()
 
