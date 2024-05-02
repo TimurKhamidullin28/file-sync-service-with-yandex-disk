@@ -15,7 +15,15 @@ BASE_URL = os.getenv("BASE_URL")
 
 
 class ConnectorWithCloudService:
+    """
+    Класс, описывающий модель коннектора, который отвечает за работу с Яндекс Диском (облачным сервисом)
+    """
     def __init__(self, token: str, remote_dir: str):
+        """
+        Метод класса, инициализирующий его объект
+        :param token: передается токен авторизации от API облачного сервиса
+        :param remote_dir: передается имя директории на облачном сервисе
+        """
         self.__token = token,
         self.__remote_dir = remote_dir
         self.__headers = {'Authorization': 'OAuth ' + f'{self.__token[0]}',
@@ -23,6 +31,10 @@ class ConnectorWithCloudService:
 
     @classmethod
     def get_info_local(cls) -> Dict:
+        """
+        Метод класса, возвращающий информацию о файлах в отслеживаемой директории на локальном компьютере
+        (имя файла и время его последнего изменения).
+        """
         result = dict()
         for i_file in os.listdir(TARGET_PATH):
             modified_time = os.path.getmtime(os.path.join(TARGET_PATH, i_file))
@@ -32,6 +44,10 @@ class ConnectorWithCloudService:
         return result
 
     def get_info_remote(self) -> Dict:
+        """
+        Метод класса, возвращающий информацию о файлах в директории на облачном хранилище
+        (имя файла и время его последнего изменения).
+        """
         result = dict()
         response = api_request(endpoint='resources',
                                params={'path': self.__remote_dir,
@@ -46,6 +62,10 @@ class ConnectorWithCloudService:
             return result
 
     def load_file(self, file_name: str) -> None:
+        """
+        Метод класса, который загружает файл на облачное хранилище
+        :param file_name: передается имя файла из отслеживаемой директории
+        """
         response = api_request(endpoint='resources/upload',
                                params={'path': f'{self.__remote_dir}/{file_name}'},
                                headers=self.__headers)
@@ -55,6 +75,10 @@ class ConnectorWithCloudService:
             requests.put(url=link, data=open((os.path.join(TARGET_PATH, file_name)), 'rb').read())
 
     def update_file(self, file_name: str) -> None:
+        """
+        Метод класса, который обновляет файл в облачном хранилище
+        :param file_name: передается имя файла из отслеживаемой директории
+        """
         response = api_request(endpoint='resources/upload',
                                params={'path': f'{self.__remote_dir}/{file_name}',
                                        'overwrite': 'true'},
@@ -65,6 +89,10 @@ class ConnectorWithCloudService:
             requests.put(url=link, data=open((os.path.join(TARGET_PATH, file_name)), 'rb').read())
 
     def delete_file(self, file_name: str) -> None:
+        """
+        Метод класса, который безвозвратно удаляет файл из облачного хранилища
+        :param file_name: передается имя файла из директории на облочном сервисе
+        """
         requests.delete(url=f'{BASE_URL}resources',
                         params={'path': f'{self.__remote_dir}/{file_name}',
                                 'permanently': 'true'},

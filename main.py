@@ -6,12 +6,18 @@ from loguru import logger
 from models import ConnectorWithCloudService
 
 
-def sync_files(connector: ConnectorWithCloudService, logger_file: logger):
+def sync_files(connector: ConnectorWithCloudService, logger_file: logger) -> None:
+    """
+    Функция, синхронизирующая файлы на локальном компьютере и в облачном хранилище
+    :param connector: работающий с облачным сервисом объект класса
+    :param logger_file: логгер из модуля loguru
+    """
     remote_files = connector.get_info_remote()
     local_files = connector.get_info_local()
 
     if remote_files:
         for i_file in remote_files.keys():
+            # Условие, при котором файл удаляется из облачного хранилища:
             if i_file not in local_files.keys():
                 try:
                     connector.delete_file(i_file)
@@ -21,6 +27,7 @@ def sync_files(connector: ConnectorWithCloudService, logger_file: logger):
                     logger_file.error('Файл {} не удален. Ошибка соединения.'.format(i_file))
 
     for i_file in local_files.keys():
+        # Условие, при котором файл записывается в облачное хранилище:
         if not remote_files or i_file not in remote_files.keys():
             try:
                 connector.load_file(i_file)
@@ -30,6 +37,7 @@ def sync_files(connector: ConnectorWithCloudService, logger_file: logger):
             except OSError:
                 logger_file.error("Ошибка чтения файла {}".format(i_file))
         if remote_files:
+            # Условие, при котором файл обновляется в облачном хранилище:
             if i_file in remote_files.keys() and local_files[i_file] > remote_files[i_file]:
                 try:
                     connector.update_file(i_file)
